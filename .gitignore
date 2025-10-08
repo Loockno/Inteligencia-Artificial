@@ -1,0 +1,17 @@
+# Ignorar carpetas con datos e imágenes
+Fotos/*
+Imagenes/*
+Payasita/*
+Inteligencia Artificial/*
+
+# Ignorar archivos de video
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Ignorar archivos temporales y caché
+__pycache__/
+*.pyc
+*.pyo
+*.log
