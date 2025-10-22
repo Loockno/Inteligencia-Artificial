@@ -14,7 +14,7 @@ os.makedirs(nombre_persona, exist_ok=True)
 rostro = cv.CascadeClassifier('haarcascade_frontalface_alt.xml')
 
 # Abrir cámara
-cap = cv.VideoCapture("./payasita.mp4")
+cap = cv.VideoCapture(0)
 i = 0  
 
 while True:
