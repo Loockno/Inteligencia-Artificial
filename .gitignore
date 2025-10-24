@@ -1,17 +1,16 @@
-# Ignorar carpetas con datos e imágenes
-Fotos/*
-Imagenes/*
-Payasita/*
-Inteligencia Artificial/*
+# Entornos virtuales
+venv/
+env/
+ENV/
+.venv
 
-# Ignorar archivos de video
-*.mp4
-*.avi
-*.mov
-*.mkv
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# Ignorar archivos temporales y caché
-__pycache__/
-*.pyc
-*.pyo
-*.log
+# Distribuciones
+dist/
+build/
+*.egg-info/
