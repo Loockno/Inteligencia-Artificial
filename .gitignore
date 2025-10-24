@@ -1,16 +1,19 @@
-# Entornos virtuales
+vscode/
+Fotos/
+Imagenes/
+Inteligencia Artificial/
 venv/
-env/
-ENV/
-.venv
+venv/lib/
+Otros/
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
+# Ignorar archivos de video
+*.mp4
+*.avi
+*.mov
+*.mkv
 
-# Distribuciones
-dist/
-build/
-*.egg-info/
+# Ignorar archivos temporales y caché
+__pycache__/
+*.pyc
+*.pyo
+*.log

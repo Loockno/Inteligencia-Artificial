@@ -1,45 +1,41 @@
-import os
-import numpy as np
 import cv2 as cv
-import math 
 
-# --- CONFIGURACIÓN --- #
-# Cambia el nombre aquí para guardar en la carpeta que desees
-nombre_persona = "Payasita"   # ← pon "Obed" o "Sebas" cuando quieras cambiar
+# Modelo Fisher
+rec = cv.face.FisherFaceRecognizer_create()
+rec.read('FisherFace.xml')  # mismo tipo que el create
 
-# Crear la carpeta si no existe
-os.makedirs(nombre_persona, exist_ok=True)
+# Mapa de etiquetas (ajusta a tus clases reales)
+# Ejemplo: faces = {0: 'Pedro', 1: 'OtraPersona'}
+faces = {0: 'Pedro'}
 
-# Cargar el detector de rostros
-rostro = cv.CascadeClassifier('haarcascade_frontalface_alt.xml')
-
-# Abrir cámara
 cap = cv.VideoCapture(0)
-i = 0  
+det = cv.CascadeClassifier('haarcascade_frontalface_alt.xml')
+
+THRESH = 500.0  # umbral típico para Fisher; ajusta a tu modelo
 
 while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("No se pudo acceder a la cámara.")
+    ok, frame = cap.read()
+    if not ok:
         break
 
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-    rostros = rostro.detectMultiScale(gray, 1.3, 5)
+    rostros = det.detectMultiScale(gray, 1.3, 3)
 
     for (x, y, w, h) in rostros:
-        frame2 = frame[y:y+h, x:x+w]
-        frame2 = cv.resize(frame2, (100, 100), interpolation=cv.INTER_AREA)
+        roi = gray[y:y+h, x:x+w]
+        roi = cv.resize(roi, (100, 100), interpolation=cv.INTER_CUBIC)
+        label, dist = rec.predict(roi)
 
-        # Guarda dentro de la carpeta correspondiente
-        filename = os.path.join(nombre_persona, f"{nombre_persona}_{i}.jpg")
-        cv.imwrite(filename, frame2)
+        if dist < THRESH and label in faces:
+            nombre = faces[label]
+            cv.putText(frame, f'{nombre} ({dist:.1f})', (x, y-10), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2, cv.LINE_AA)
+            cv.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 2)
+        else:
+            cv.putText(frame, 'Desconocido', (x, y-10), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2, cv.LINE_AA)
+            cv.rectangle(frame, (x,y), (x+w,y+h), (0,0,255), 2)
 
-        cv.imshow('rostror', frame2)
-
-    cv.imshow('rostros', frame)
-    i += 1
-    k = cv.waitKey(1)
-    if k == 27:  # tecla ESC
+    cv.imshow('Fisher', frame)
+    if cv.waitKey(1) == 27:
         break
 
 cap.release()
