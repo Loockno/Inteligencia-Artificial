@@ -6,7 +6,7 @@ rec.read('FisherFace.xml')  # mismo tipo que el create
 
 # Mapa de etiquetas (ajusta a tus clases reales)
 # Ejemplo: faces = {0: 'Pedro', 1: 'OtraPersona'}
-faces = {0: 'Pedro'}
+faces = {0: 'Pedro', 1: 'Obed', 2: 'Eliseo el mas capito', 3: 'Sebas'}
 
 cap = cv.VideoCapture(0)
 det = cv.CascadeClassifier('haarcascade_frontalface_alt.xml')

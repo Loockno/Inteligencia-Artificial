@@ -1,7 +1,7 @@
 import cv2 as cv 
 import numpy as np 
 import os
-dataSet = './Foto'
+dataSet = './Fotos'
 faces  = os.listdir(dataSet)
 print(faces)
 

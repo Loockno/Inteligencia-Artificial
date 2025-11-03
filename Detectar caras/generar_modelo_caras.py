@@ -13,7 +13,7 @@ print(f"🚀 OpenCV usando {cv.getNumThreads()} threads (de {cpu_count()} cores)
 # Configuración del dataset
 dataSet = './fotos'
 target_size = (100, 100)
-max_per_class = 500
+max_per_class = 3500
 min_per_class = 20
 seed = 42
 random.seed(seed)
