@@ -183,7 +183,7 @@ def limpiar_grid(grid):
                 nodo.restablecer()
 
 def main(ventana, ancho):
-    FILAS = 40
+    FILAS = 10
     grid = crear_grid(FILAS, ancho)
 
     inicio = None

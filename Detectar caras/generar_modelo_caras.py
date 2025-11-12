@@ -11,7 +11,7 @@ cv.setNumThreads(cpu_count())  # Usa todos los cores disponibles
 print(f"🚀 OpenCV usando {cv.getNumThreads()} threads (de {cpu_count()} cores)")
 
 # Configuración del dataset
-dataSet = './fotos'
+dataSet = './Detectar caras/fotos_28x28'
 target_size = (100, 100)
 max_per_class = 3500
 min_per_class = 20

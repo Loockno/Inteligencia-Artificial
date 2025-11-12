@@ -4,7 +4,7 @@ import os
 
 # Ruta base correcta: .../archive/data/<CLASE>/*.jpg|png
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_DIR = os.path.join(SCRIPT_DIR, "archive", "data")
+DATASET_DIR = os.path.join(SCRIPT_DIR, "Emociones2")
 
 # Tamaño uniforme para Fisher/Eigen/LBPH (elige uno y sé consistente)
 IMG_SIZE = (100, 100)
@@ -43,7 +43,7 @@ labels = np.array(labels, dtype=np.int32)
 # Entrenador FisherFace
 faceRecognizer = cv.face.FisherFaceRecognizer_create()
 faceRecognizer.train(facesData, labels)
-faceRecognizer.write('FisherFace.xml')
+faceRecognizer.write('Emociones.xml')
 
 # Mapa clase→etiqueta para referencia
 print("Clases:", classes)

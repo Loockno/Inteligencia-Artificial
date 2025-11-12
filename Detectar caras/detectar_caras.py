@@ -2,7 +2,7 @@ import cv2 as cv
 
 # Modelo Fisher
 rec = cv.face.FisherFaceRecognizer_create()
-rec.read('FisherFace.xml')  # mismo tipo que el create
+rec.read('./Detectar caras/FisherFace.xml')  # mismo tipo que el create
 
 # Mapa de etiquetas (ajusta a tus clases reales)
 # Ejemplo: faces = {0: 'Pedro', 1: 'OtraPersona'}
