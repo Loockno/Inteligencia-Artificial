@@ -6,12 +6,14 @@ Inteligencia Artificial/
 venv/
 venv/lib/
 Otros/
+sportimages/
 
 # Ignorar archivos de video
 *.mp4
 *.avi
 *.mov
 *.mkv
+*.xml
 
 # Ignorar archivos temporales y caché
 __pycache__/

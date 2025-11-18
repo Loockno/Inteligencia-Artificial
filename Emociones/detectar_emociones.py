@@ -5,7 +5,7 @@ faceRecognizer = cv.face.FisherFaceRecognizer_create()
 faceRecognizer.read('Emociones.xml')
 faces=['Happy', 'Angry', 'Sad']
 cap = cv.VideoCapture(0)
-rostro = cv.CascadeClassifier('../haarcascade_frontalface_alt.xml')
+rostro = cv.CascadeClassifier('haarcascade_frontalface_alt.xml')
 while True:
     ret, frame = cap.read()
     if ret == False: break
