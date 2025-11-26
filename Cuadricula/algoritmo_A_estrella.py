@@ -2,176 +2,246 @@ import pygame
 from heapq import heappush, heappop
 import math
 
+# --- Configuración Inicial ---
 pygame.init()
 
-# Configuración
-ANCHO = 800
-ALTO = 600
-FILAS = 11  # Cambia el número de filas
-COLUMNAS = 11  # Cambia el número de columnas
-VENTANA = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("A* Pathfinding con Diagonal")
+ANCHO_VENTANA = 800
+ALTO_VENTANA = 600
+FILAS = 11        # Aumenté un poco la resolución para ver mejor el camino
+COLUMNAS = 11
+ANCHO_NODO = ANCHO_VENTANA // COLUMNAS
+ALTO_NODO = ALTO_VENTANA // FILAS
 
-# Colores
-BLANCO, NEGRO, GRIS = (255, 255, 255), (0, 0, 0), (128, 128, 128)
-VERDE, ROJO, NARANJA, PURPURA, CIAN = (0, 255, 0), (255, 0, 0), (255, 165, 0), (128, 0, 128), (64, 224, 208)
+VENTANA = pygame.display.set_mode((ANCHO_VENTANA, ALTO_VENTANA))
+pygame.display.set_caption("A* Pathfinding Optimizado (Euclidiano)")
+
+# Colores (RGB)
+BLANCO = (255, 255, 255)
+NEGRO = (20, 20, 20)      # Pared
+GRIS = (200, 200, 200)    # Líneas grid
+VERDE = (0, 255, 128)     # Open Set (Nodos considerados)
+ROJO = (255, 100, 100)    # Closed Set (Nodos visitados)
+NARANJA = (255, 165, 0)   # Inicio
+TURQUESA = (64, 224, 208) # Fin
+AZUL = (50, 150, 255)     # Camino final
 
 class Nodo:
-    def __init__(self, fila, col, ancho, alto):
-        self.fila, self.col = fila, col
-        self.x, self.y = col * ancho, fila * alto
+    def __init__(self, fila, col):
+        self.fila = fila
+        self.col = col
+        self.x = col * ANCHO_NODO
+        self.y = fila * ALTO_NODO
         self.color = BLANCO
-        self.ancho = ancho
-        self.alto = alto
         self.vecinos = []
+        self.padre = None # Para reconstruir el camino
+
+    def get_pos(self):
+        return self.fila, self.col
+
+    def es_pared(self):
+        return self.color == NEGRO
+
+    def es_inicio(self):
+        return self.color == NARANJA
+
+    def es_fin(self):
+        return self.color == TURQUESA
+
+    def reset(self):
+        self.color = BLANCO
+        self.padre = None
+
+    def hacer_pared(self):
+        self.color = NEGRO
+
+    def hacer_inicio(self):
+        self.color = NARANJA
+
+    def hacer_fin(self):
+        self.color = TURQUESA
+
+    def hacer_visitado(self):
+        self.color = ROJO
+
+    def hacer_open(self):
+        self.color = VERDE
+
+    def hacer_camino(self):
+        self.color = AZUL
 
     def dibujar(self, ventana):
-        pygame.draw.rect(ventana, self.color, (self.x, self.y, self.ancho, self.alto))
+        pygame.draw.rect(ventana, self.color, (self.x, self.y, ANCHO_NODO, ALTO_NODO))
 
-    def actualizar_vecinos(self, grid, filas, columnas):
+    def actualizar_vecinos(self, grid):
         self.vecinos = []
-        # Movimientos: arriba, abajo, izquierda, derecha y las 4 diagonales
-        dirs = [(1, 0), (-1, 0), (0, 1), (0, -1),  # Ortogonales
-                (1, 1), (1, -1), (-1, 1), (-1, -1)]  # Diagonales
-        
-        for df, dc in dirs:
+        # (f, c) -> Abajo, Arriba, Derecha, Izquierda, y Diagonales
+        direcciones = [
+            (1, 0), (-1, 0), (0, 1), (0, -1), # Ortogonales
+            (1, 1), (1, -1), (-1, 1), (-1, -1) # Diagonales
+        ]
+
+        for df, dc in direcciones:
             f, c = self.fila + df, self.col + dc
-            if 0 <= f < filas and 0 <= c < columnas and grid[f][c].color != NEGRO:
-                # Para movimiento diagonal, verificar que no haya obstáculos adyacentes
-                if df != 0 and dc != 0:  # Es diagonal
-                    if grid[self.fila + df][self.col].color == NEGRO or grid[self.fila][self.col + dc].color == NEGRO:
-                        continue  # No permitir diagonal si hay obstáculo en el camino
-                self.vecinos.append(grid[f][c])
 
-def crear_grid(filas, columnas, ancho_ventana, alto_ventana):
-    ancho_nodo = ancho_ventana // columnas
-    alto_nodo = alto_ventana // filas
-    return [[Nodo(i, j, ancho_nodo, alto_nodo) for j in range(columnas)] for i in range(filas)]
+            if 0 <= f < FILAS and 0 <= c < COLUMNAS:
+                vecino = grid[f][c]
+                if not vecino.es_pared():
+                    # Lógica para evitar atravesar esquinas de paredes (Wall Clipping)
+                    if abs(df) == 1 and abs(dc) == 1: # Es diagonal
+                        # Verifica bloqueos adyacentes ortogonales
+                        if grid[self.fila + df][self.col].es_pared() or grid[self.fila][self.col + dc].es_pared():
+                            continue 
+                    
+                    self.vecinos.append(vecino)
 
-def dibujar(ventana, grid, filas, columnas, ancho_ventana, alto_ventana):
+def crear_grid():
+    grid = []
+    for i in range(FILAS):
+        grid.append([])
+        for j in range(COLUMNAS):
+            nodo = Nodo(i, j)
+            grid[i].append(nodo)
+    return grid
+
+def dibujar_grid(ventana):
+    for i in range(FILAS):
+        pygame.draw.line(ventana, GRIS, (0, i * ALTO_NODO), (ANCHO_VENTANA, i * ALTO_NODO))
+    for j in range(COLUMNAS):
+        pygame.draw.line(ventana, GRIS, (j * ANCHO_NODO, 0), (j * ANCHO_NODO, ALTO_VENTANA))
+
+def dibujar(ventana, grid):
     ventana.fill(BLANCO)
     for fila in grid:
         for nodo in fila:
             nodo.dibujar(ventana)
-    
-    ancho_nodo = ancho_ventana // columnas
-    alto_nodo = alto_ventana // filas
-    
-    for i in range(filas + 1):
-        pygame.draw.line(ventana, GRIS, (0, i * alto_nodo), (ancho_ventana, i * alto_nodo))
-    for j in range(columnas + 1):
-        pygame.draw.line(ventana, GRIS, (j * ancho_nodo, 0), (j * ancho_nodo, alto_ventana))
-    
+    dibujar_grid(ventana)
     pygame.display.update()
 
-def heuristica(a, b):
-    # Distancia euclidiana para mejor precisión con diagonales
-    return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
+def heuristica(p1, p2):
+    # Distancia Euclidiana (Pitágoras) es la correcta para movimientos diagonales
+    x1, y1 = p1
+    x2, y2 = p2
+    return abs(x1 - x2) + abs(y1 - y2)
 
-def a_estrella(ventana, grid, inicio, fin, filas, columnas, ancho_ventana, alto_ventana):
-    contador = 0
-    open_heap = [(0, contador, inicio)]
-    came_from = {}
+def reconstruir_camino(nodo_actual, draw_func):
+    while nodo_actual.padre:
+        nodo_actual = nodo_actual.padre
+        if not nodo_actual.es_inicio(): 
+            nodo_actual.hacer_camino()
+        draw_func()
+
+def a_estrella(draw_func, grid, inicio, fin):
+    count = 0
+    open_set = [] # Priority Queue
+    heappush(open_set, (0, count, inicio))
+    
+    # g_score: costo exacto desde el inicio hasta este nodo
     g_score = {nodo: float("inf") for fila in grid for nodo in fila}
     g_score[inicio] = 0
-    open_set = {inicio}
+    
+    # f_score: g_score + heurística
+    f_score = {nodo: float("inf") for fila in grid for nodo in fila}
+    f_score[inicio] = heuristica(inicio.get_pos(), fin.get_pos())
 
-    while open_heap:
-        actual = heappop(open_heap)[2]
-        open_set.discard(actual)
+    open_set_hash = {inicio} # Para búsqueda rápida O(1)
+
+    while open_set:
+        # Manejo de eventos básico para poder cerrar la ventana mientras calcula
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return False
+
+        # Obtener el nodo con el f_score más bajo
+        actual = heappop(open_set)[2]
+        open_set_hash.remove(actual)
 
         if actual == fin:
-            # Reconstruir camino
-            while actual in came_from:
-                actual = came_from[actual]
-                if actual.color not in [NARANJA, PURPURA]:
-                    actual.color = CIAN
+            reconstruir_camino(fin, draw_func)
+            fin.hacer_fin() # Restaurar color fin
             return True
 
         for vecino in actual.vecinos:
-            # Costo diagonal es √2 ≈ 1.414, costo ortogonal es 1
+            # Costo: 1 para ortogonal, 1.414 (raiz de 2) para diagonal
             es_diagonal = abs(vecino.fila - actual.fila) == 1 and abs(vecino.col - actual.col) == 1
-            costo = math.sqrt(2) if es_diagonal else 1
-            temp_g = g_score[actual] + costo
+            peso = 1.414 if es_diagonal else 1.0
             
-            if temp_g < g_score[vecino]:
-                came_from[vecino] = actual
-                g_score[vecino] = temp_g
-                if vecino not in open_set:
-                    contador += 1
-                    f_score = temp_g + heuristica((vecino.fila, vecino.col), (fin.fila, fin.col))
-                    heappush(open_heap, (f_score, contador, vecino))
-                    open_set.add(vecino)
-                    if vecino.color not in [NARANJA, PURPURA]:
-                        vecino.color = VERDE
+            temp_g_score = g_score[actual] + peso
 
-        if actual.color not in [NARANJA, PURPURA]:
-            actual.color = ROJO
-        dibujar(ventana, grid, filas, columnas, ancho_ventana, alto_ventana)
+            if temp_g_score < g_score[vecino]:
+                vecino.padre = actual
+                g_score[vecino] = temp_g_score
+                f_score[vecino] = temp_g_score + heuristica(vecino.get_pos(), fin.get_pos())
+                
+                if vecino not in open_set_hash:
+                    count += 1
+                    heappush(open_set, (f_score[vecino], count, vecino))
+                    open_set_hash.add(vecino)
+                    if not vecino.es_fin():
+                        vecino.hacer_open()
+
+        draw_func()
+
+        if actual != inicio:
+            actual.hacer_visitado()
 
     return False
 
 def main():
-    grid = crear_grid(FILAS, COLUMNAS, ANCHO, ALTO)
-    inicio, fin = None, None
+    grid = crear_grid()
+    inicio = None
+    fin = None
     corriendo = True
 
     while corriendo:
-        dibujar(VENTANA, grid, FILAS, COLUMNAS, ANCHO, ALTO)
+        dibujar(VENTANA, grid)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 corriendo = False
 
-            if pygame.mouse.get_pressed()[0]:  # Click izquierdo
-                x, y = pygame.mouse.get_pos()
-                fila = y // (ALTO // FILAS)
-                col = x // (ANCHO // COLUMNAS)
-                
+            # Click Izquierdo: Poner Inicio, Fin o Pared
+            if pygame.mouse.get_pressed()[0]:
+                pos = pygame.mouse.get_pos()
+                fila, col = pos[1] // ALTO_NODO, pos[0] // ANCHO_NODO
                 if 0 <= fila < FILAS and 0 <= col < COLUMNAS:
                     nodo = grid[fila][col]
-                    
-                    if not inicio and nodo.color == BLANCO:
+                    if not inicio and nodo != fin:
                         inicio = nodo
-                        nodo.color = NARANJA
-                    elif not fin and nodo != inicio and nodo.color == BLANCO:
+                        inicio.hacer_inicio()
+                    elif not fin and nodo != inicio:
                         fin = nodo
-                        nodo.color = PURPURA
+                        fin.hacer_fin()
                     elif nodo != inicio and nodo != fin:
-                        nodo.color = NEGRO
+                        nodo.hacer_pared()
 
-            elif pygame.mouse.get_pressed()[2]:  # Click derecho
-                x, y = pygame.mouse.get_pos()
-                fila = y // (ALTO // FILAS)
-                col = x // (ANCHO // COLUMNAS)
-                
+            # Click Derecho: Borrar
+            elif pygame.mouse.get_pressed()[2]:
+                pos = pygame.mouse.get_pos()
+                fila, col = pos[1] // ALTO_NODO, pos[0] // ANCHO_NODO
                 if 0 <= fila < FILAS and 0 <= col < COLUMNAS:
                     nodo = grid[fila][col]
-                    nodo.color = BLANCO
+                    nodo.reset()
                     if nodo == inicio:
                         inicio = None
                     elif nodo == fin:
                         fin = None
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    # Limpiar cuadrícula (mantiene inicio, fin y paredes)
+                if event.key == pygame.K_SPACE and inicio and fin:
+                    # Actualizar vecinos solo antes de correr
                     for fila in grid:
                         for nodo in fila:
-                            if nodo.color not in [NARANJA, PURPURA, NEGRO]:
-                                nodo.color = BLANCO
+                            nodo.actualizar_vecinos(grid)
                     
-                    # Ejecutar A* si hay inicio y fin
-                    if inicio and fin:
-                        for fila in grid:
-                            for nodo in fila:
-                                nodo.actualizar_vecinos(grid, FILAS, COLUMNAS)
-                        a_estrella(VENTANA, grid, inicio, fin, FILAS, COLUMNAS, ANCHO, ALTO)
+                    a_estrella(lambda: dibujar(VENTANA, grid), grid, inicio, fin)
 
                 if event.key == pygame.K_c:
-                    inicio, fin = None, None
-                    grid = crear_grid(FILAS, COLUMNAS, ANCHO, ALTO)
+                    inicio = None
+                    fin = None
+                    grid = crear_grid()
 
     pygame.quit()
 
-main()
+if __name__ == "__main__":
+    main()
