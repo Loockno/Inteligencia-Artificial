@@ -11,6 +11,7 @@ Animales/
 TutorAlgoritmos/
 venv_filosofia/
 
+
 # Ignorar archivos de video
 *.mp4
 *.avi
