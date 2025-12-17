@@ -8,6 +8,8 @@ venv/lib/
 Otros/
 sportimages/
 Animales/
+TutorAlgoritmos/
+venv_filosofia/
 
 # Ignorar archivos de video
 *.mp4
